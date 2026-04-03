@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rapport d'Entraînement — 31 Mars 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: rgba(255,255,255,0.06);
+    --accent: #f97316;
+    --accent2: #3b82f6;
+    --accent3: #10b981;
+    --danger: #ef4444;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --interval: #f97316;
+    --recovery: #3b82f6;
+    --warmup: #10b981;
+    --cooldown: #8b5cf6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    padding: 60px 40px 40px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; left: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(249,115,22,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.1s forwards;
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 10vw, 100px);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    color: var(--text);
+    opacity: 0;
+    animation: fadeUp 0.6s 0.2s forwards;
+  }
+  .hero-title span { color: var(--accent); }
+  .hero-meta {
+    margin-top: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.3s forwards;
+  }
+  .hero-meta b { color: var(--text); }
+
+  /* Import zone */
+  .import-zone {
+    margin: 24px 40px;
+    border: 2px dashed rgba(249,115,22,0.3);
+    border-radius: 12px;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(249,115,22,0.03);
+    cursor: pointer;
+    transition: all 0.3s;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.4s forwards;
+  }
+  .import-zone:hover, .import-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(249,115,22,0.07);
+  }
+  .import-icon {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    background: rgba(249,115,22,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .import-text h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .import-text p { font-size: 12px; color: var(--muted); }
+  .import-text .file-name { color: var(--accent); font-family: 'DM Mono', monospace; font-size: 12px; margin-top: 4px; }
+  #fileInput { display: none; }
+
+  /* MAIN CONTENT */
+  .main { padding: 0 40px 60px; }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 32px 0;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.5s forwards;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.12); }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .stat-card:hover::after { transform: scaleX(1); }
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .stat-unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .stat-card.accent .stat-value { color: var(--accent); }
+  .stat-card.blue .stat-value { color: var(--accent2); }
+  .stat-card.green .stat-value { color: var(--accent3); }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin: 40px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: rgba(249,115,22,0.15);
+    color: var(--accent);
+  }
+
+  /* CHART CONTAINERS */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 16px;
+  }
+  .chart-card h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  canvas { width: 100% !important; }
+
+  /* INTERVALS TABLE */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  thead th {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 14px 20px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody td {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .badge.interval { background: rgba(249,115,22,0.15); color: var(--interval); }
+  .badge.recovery { background: rgba(59,130,246,0.15); color: var(--recovery); }
+  .badge.warmup { background: rgba(16,185,129,0.15); color: var(--warmup); }
+  .badge.cooldown { background: rgba(139,92,246,0.15); color: var(--cooldown); }
+  .badge::before { content: '●'; font-size: 7px; }
+
+  /* HR BAR */
+  .hr-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .hr-bar-bg {
+    flex: 1; height: 4px; background: rgba(255,255,255,0.06);
+    border-radius: 2px; overflow: hidden; min-width: 60px;
+  }
+  .hr-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s; }
+
+  /* PACE BAR */
+  .pace-chip {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+
+  /* ZONE CHART */
+  .zones-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .zone-bar-wrap { text-align: center; }
+  .zone-bar-outer {
+    height: 100px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .zone-bar-inner {
+    border-radius: 6px 6px 0 0;
+    transition: height 1s cubic-bezier(0.23,1,0.32,1);
+  }
+  .zone-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+  .zone-pct { font-family: 'Bebas Neue', sans-serif; font-size: 20px; }
+
+  /* SUMMARY BOX */
+  .summary-box {
+    background: linear-gradient(135deg, rgba(249,115,22,0.08), rgba(59,130,246,0.05));
+    border: 1px solid rgba(249,115,22,0.2);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-top: 32px;
+  }
+  .summary-box h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    color: var(--accent);
+  }
+  .summary-box p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .summary-box p:last-child { margin-bottom: 0; }
+  .summary-box strong { color: var(--accent); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 700px) {
+    .hero, .main { padding-left: 20px; padding-right: 20px; }
+    .import-zone { margin-left: 20px; margin-right: 20px; }
+    .zones-grid { grid-template-columns: repeat(5,1fr); gap: 4px; }
+    thead th, tbody td { padding: 10px 12px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-label">⚡ Analyse d'entraînement par intervalles</div>
+  <div class="hero-title">INTERVAL<br><span>RUNNING</span></div>
+  <div class="hero-meta" id="heroMeta">
+    <span>📅 <b id="metaDate">—</b></span>
+    <span>🕕 <b id="metaTime">—</b></span>
+    <span>⌚ <b id="metaDevice">—</b></span>
+    <span>🏃 <b id="metaDist">—</b></span>
+  </div>
+</div>
+
+<div class="import-zone" id="importZone" onclick="document.getElementById('fileInput').click()">
+  <div class="import-icon">📂</div>
+  <div class="import-text">
+    <h3>Importer un fichier JSON</h3>
+    <p>Glissez-déposez ou cliquez pour charger un export Suunto/Polar/Garmin</p>
+    <div class="file-name" id="fileName"></div>
+  </div>
+</div>
+<input type="file" id="fileInput" accept=".json">
+
+<div class="main" id="mainContent" style="display:none">
+
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <div class="section-title">Intervalles <span class="section-badge" id="intervalCount">—</span></div>
+
+  <div class="chart-card">
+    <h3>Allure & Fréquence cardiaque par intervalle</h3>
+    <canvas id="chartMain" height="260"></canvas>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Type</th>
+          <th>Distance</th>
+          <th>Durée</th>
+          <th>Allure moy.</th>
+          <th>Allure max</th>
+          <th>FC moy.</th>
+          <th>FC max</th>
+          <th>Puissance moy.</th>
+        </tr>
+      </thead>
+      <tbody id="intervalsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">Zones cardiaques</div>
+  <div class="chart-card">
+    <h3>Répartition du temps en zone (% de séance)</h3>
+    <div class="zones-grid" id="zonesGrid"></div>
+  </div>
+
+  <div class="section-title">Évolution en temps réel</div>
+  <div class="chart-card">
+    <h3>Fréquence cardiaque (bpm) — courbe complète</h3>
+    <canvas id="chartHR" height="200"></canvas>
+  </div>
+
+  <div class="chart-card">
+    <h3>Vitesse instantanée (km/h) — courbe complète</h3>
+    <canvas id="chartSpeed" height="200"></canvas>
+  </div>
+
+  <div class="summary-box" id="summaryBox"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+const MAX_HR = 195; // beats per minute reference
+
+function hrRaw(v) { return v ? Math.round(v * 60) : null; }
+
+function speedToPace(mps) {
+  if (!mps || mps < 0.5) return '—';
+  const secsPerKm = 1000 / mps;
+  const m = Math.floor(secsPerKm / 60);
+  const s = Math.round(secsPerKm % 60);
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function fmtDuration(secs) {
+  const m = Math.floor(secs / 60);
+  const s = Math.round(secs % 60);
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function fmtDist(m) {
+  return m >= 1000 ? (m/1000).toFixed(2)+' km' : m+' m';
+}
+
+function typeInfo(t, notes) {
+  const n = (notes||'').toLowerCase();
+  if (n.includes('échauffement') || t === 'Warmup') return {label:'Échauffement', cls:'warmup'};
+  if (n.includes('repos') || t === 'Cooldown') return {label:'Récupération finale', cls:'cooldown'};
+  if (n.includes('récupération') || t === 'Recovery') return {label:'Récupération', cls:'recovery'};
+  return {label:'Intervalle', cls:'interval'};
+}
+
+function zoneColor(i) {
+  return ['#3b82f6','#10b981','#f59e0b','#f97316','#ef4444'][i];
+}
+
+// ─── CHART.JS DEFAULTS ───────────────────────────────────────────────────────
+Chart.defaults.color = '#6b7280';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 11;
+
+let chartMain = null, chartHR = null, chartSpeed = null;
+
+// ─── PARSE & RENDER ──────────────────────────────────────────────────────────
+function parseAndRender(data) {
+  const header = data.DeviceLog.Header;
+  const samples = data.DeviceLog.Samples;
+  const windows1 = data.DeviceLog.Windows;
+
+  // Device / meta
+  document.getElementById('metaDevice').textContent = header.Device?.Name || '—';
+  document.getElementById('metaDist').textContent = fmtDist(header.Distance);
+
+const isoDate = header.DateTime;
+const dateObj = new Date(isoDate);
+
+// Formatage de la date
+const dateFormatted = dateObj.toLocaleDateString('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric'
+});
+
+// Formatage de l'heure
+const timeFormatted = dateObj.toLocaleTimeString('fr-FR', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false
+});
+
+console.log(`date = ${dateFormatted}`); // "31 mars 2026"
+console.log(`heure = ${timeFormatted}`); // "18:25"
+
+  document.getElementById('metaDate').textContent = dateFormatted;
+  document.getElementById('metaTime').textContent = timeFormatted;
+
+  // ─ Extract Windows (intervals) ─
+  const windows = windows1
+    .filter(s => s.Window)
+    .map(s => s.Window)
+    .filter(w => w.IntervalType && w.Type === 'Interval');
+
+  // ─ Extract time-series samples ─
+  const hrSeries = [], speedSeries = [];
+  let t0 = null;
+  for (const s of samples) {
+    const t = new Date(s.TimeISO8601).getTime();
+    if (!t0) t0 = t;
+    const elapsed = (t - t0) / 1000;
+    if (s.HR !== undefined) hrSeries.push({t: elapsed, v: hrRaw(s.HR)});
+    if (s.Speed !== undefined && s.Speed !== null)
+      speedSeries.push({t: elapsed, v: +(s.Speed * 3.6).toFixed(2)});
+  }
+
+  // ─ STAT CARDS ─
+  const totalDuration = header.Duration;
+  const totalDist = header.Distance;
+  const avgHR = hrRaw(header.Personal?.MaxHR ? null : samples.find(s=>s.HR)?.HR);
+  const globalHR = samples.filter(s=>s.HR).map(s=>hrRaw(s.HR));
+  const avgHRGlobal = Math.round(globalHR.reduce((a,b)=>a+b,0)/globalHR.length);
+  const maxHRGlobal = Math.max(...globalHR);
+
+  const intervals = windows.filter(w => w.IntervalType === 'Interval');
+  console.log(windows)
+  const nIntervals = intervals.length;
+  const energy = Math.round(header.Energy / 4184); // J → kcal
+  const vo2max = header.MAXVO2;
+  const steps = header.StepCount;
+
+  const cards = [
+    {label:'Distance', value: (totalDist/1000).toFixed(2), unit:'km', cls:''},
+    {label:'Durée totale', value: fmtDuration(totalDuration), unit:'mm:ss', cls:''},
+    {label:'Intervalles', value: nIntervals, unit:'répétitions', cls:'accent'},
+    {label:'FC moy.', value: avgHRGlobal, unit:'bpm', cls:'blue'},
+    {label:'FC max', value: maxHRGlobal, unit:'bpm', cls:''},
+    {label:'VO2max', value: vo2max, unit:'mL/kg/min', cls:'green'},
+    {label:'Énergie', value: energy, unit:'kcal', cls:''},
+    {label:'Pas', value: steps.toLocaleString('fr'), unit:'foulées', cls:''},
+  ];
+
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = cards.map(c=>`
+    <div class="stat-card ${c.cls}">
+      <div class="stat-label">${c.label}</div>
+      <div class="stat-value">${c.value}</div>
+      <div class="stat-unit">${c.unit}</div>
+    </div>`).join('');
+
+  // ─ INTERVAL COUNT BADGE ─
+  document.getElementById('intervalCount').textContent = `${nIntervals} efforts`;
+
+  // ─ TABLE ─
+  const tbody = document.getElementById('intervalsBody');
+  const maxHRBpm = maxHRGlobal || MAX_HR;
+  let rowNum = 0;
+
+  tbody.innerHTML = windows.map((w, i) => {
+    const info = typeInfo(w.IntervalType, w.IntervalNotes);
+    const hrAvg = hrRaw(w.HR[0]?.Avg);
+    const hrMax = hrRaw(w.HR[0]?.Max);
+    const speedAvg = w.Speed[0]?.Avg;
+    const speedMax = w.Speed[0]?.Max;
+    const paceAvg = speedToPace(speedAvg);
+    const paceMax = speedToPace(speedMax);
+    const power = w.Power[0]?.Avg ? Math.round(w.Power[0].Avg) : '—';
+    const hrPct = hrAvg ? Math.round(hrAvg / maxHRBpm * 100) : 0;
+    const hrColor = hrPct > 90 ? '#ef4444' : hrPct > 80 ? '#f97316' : hrPct > 70 ? '#f59e0b' : '#3b82f6';
+    if (info.cls !== 'cooldown') rowNum++;
+
+    return `<tr>
+      <td style="color:var(--muted)">${info.cls==='cooldown'?'–':rowNum}</td>
+      <td><span class="badge ${info.cls}">${info.label}</span></td>
+      <td>${fmtDist(w.Distance)}</td>
+      <td>${fmtDuration(w.Duration)}</td>
+      <td><span class="pace-chip" style="color:var(--accent)">${paceAvg}</span><span style="font-size:10px;color:var(--muted)"> /km</span></td>
+      <td style="color:var(--muted)">${paceMax}</td>
+      <td>
+        <div class="hr-bar-wrap">
+          <span>${hrAvg||'—'}</span>
+          <div class="hr-bar-bg"><div class="hr-bar-fill" style="width:${hrPct}%;background:${hrColor}"></div></div>
+        </div>
+      </td>
+      <td style="color:${hrColor}">${hrMax||'—'}</td>
+      <td>${power}${power!=='—'?' W':''}</td>
+    </tr>`;
+  }).join('');
+
+  // ─ CHART MAIN (allure + FC par intervalle) ─
+  const effortWindows = windows.filter(w => w.IntervalType === 'Interval' || w.IntervalType === 'Recovery');
+  const labels = effortWindows.map((w,i) => {
+    const info = typeInfo(w.IntervalType, w.IntervalNotes);
+    return `${info.label} ${i+1}`;
+  });
+  const paceData = effortWindows.map(w => {
+    const s = w.Speed[0]?.Avg;
+    if (!s || s < 0.5) return null;
+    return +(1000/s/60).toFixed(2);
+  });
+  const hrData = effortWindows.map(w => hrRaw(w.HR[0]?.Avg));
+
+  if (chartMain) chartMain.destroy();
+  chartMain = new Chart(document.getElementById('chartMain'), {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Allure (min/km)',
+          data: paceData,
+          backgroundColor: effortWindows.map(w => {
+            const info = typeInfo(w.IntervalType, w.IntervalNotes);
+            return info.cls === 'interval' ? 'rgba(249,115,22,0.7)' :
+                   info.cls === 'recovery' ? 'rgba(59,130,246,0.5)' : 'rgba(139,92,246,0.5)';
+          }),
+          borderRadius: 6,
+          yAxisID: 'yPace',
+        },
+        {
+          type: 'line',
+          label: 'FC moy. (bpm)',
+          data: hrData,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.08)',
+          pointBackgroundColor: '#ef4444',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          tension: 0.4,
+          fill: true,
+          yAxisID: 'yHR',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#9ca3af', boxWidth: 14, padding: 20 } },
+        tooltip: {
+          backgroundColor: '#181c24',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.dataset.label.includes('Allure')) {
+                const v = ctx.raw;
+                if (!v) return 'Allure: —';
+                const m = Math.floor(v); const s = Math.round((v-m)*60);
+                return `Allure: ${m}:${String(s).padStart(2,'0')} /km`;
+              }
+              return `FC: ${ctx.raw} bpm`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxRotation: 35 } },
+        yPace: {
+          type: 'linear', position: 'left',
+          title: { display: true, text: 'Allure (min/km)', color: '#f97316' },
+          reverse: false,
+          ticks: { callback: v => { const m=Math.floor(v);const s=Math.round((v-m)*60); return `${m}:${String(s).padStart(2,'0')}`; } },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        yHR: {
+          type: 'linear', position: 'right',
+          title: { display: true, text: 'FC (bpm)', color: '#ef4444' },
+          min: 120,
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  // ─ ZONES ─
+  const zones = header.HrZones;
+  const totalSecs = header.Duration;
+  const zoneData = [
+    { label:'Z1', duration: zones.Zone1Duration, color: '#3b82f6' },
+    { label:'Z2', duration: zones.Zone2Duration, color: '#10b981' },
+    { label:'Z3', duration: zones.Zone3Duration, color: '#f59e0b' },
+    { label:'Z4', duration: zones.Zone4Duration, color: '#f97316' },
+    { label:'Z5', duration: zones.Zone5Duration, color: '#ef4444' },
+  ];
+  const maxZone = Math.max(...zoneData.map(z=>z.duration));
+  const zonesGrid = document.getElementById('zonesGrid');
+  zonesGrid.innerHTML = zoneData.map(z => {
+    const pct = Math.round(z.duration/totalSecs*100);
+    const barH = Math.round(z.duration/maxZone*100);
+    return `<div class="zone-bar-wrap">
+      <div class="zone-bar-outer">
+        <div class="zone-bar-inner" style="height:${barH}%;background:${z.color}"></div>
+      </div>
+      <div class="zone-pct" style="color:${z.color}">${pct}%</div>
+      <div class="zone-label">${z.label}</div>
+      <div class="zone-label">${fmtDuration(z.duration)}</div>
+    </div>`;
+  }).join('');
+
+  // ─ HR TIME SERIES CHART ─
+  const hrDownsample = downsample(hrSeries, 400);
+  if (chartHR) chartHR.destroy();
+  chartHR = new Chart(document.getElementById('chartHR'), {
+    type: 'line',
+    data: {
+      labels: hrDownsample.map(p => fmtDuration(p.t)),
+      datasets: [{
+        data: hrDownsample.map(p=>p.v),
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239,68,68,0.06)',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw} bpm` } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 8 } },
+        y: { min: 80, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+
+  // ─ SPEED TIME SERIES CHART ─
+  const speedDown = downsample(speedSeries, 400);
+  if (chartSpeed) chartSpeed.destroy();
+  chartSpeed = new Chart(document.getElementById('chartSpeed'), {
+    type: 'line',
+    data: {
+      labels: speedDown.map(p => fmtDuration(p.t)),
+      datasets: [{
+        data: speedDown.map(p=>p.v),
+        borderColor: '#f97316',
+        backgroundColor: 'rgba(249,115,22,0.06)',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw} km/h` } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 8 } },
+        y: { min: 0, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+
+  // ─ SUMMARY ─
+  const effortIntervals = windows.filter(w=>w.IntervalType==='Interval');
+  const avgPaceInterval = effortIntervals.length
+    ? effortIntervals.reduce((a,w)=>a+(1000/(w.Speed[0].Avg||1)/60),0)/effortIntervals.length
+    : 0;
+  const avgPaceStr = avgPaceInterval > 0
+    ? `${Math.floor(avgPaceInterval)}:${String(Math.round((avgPaceInterval%1)*60)).padStart(2,'0')}`
+    : '—';
+  const z5pct = Math.round(zones.Zone5Duration/totalSecs*100);
+  const z4pct = Math.round(zones.Zone4Duration/totalSecs*100);
+  const peakTE = header.PeakTrainingEffect;
+
+  document.getElementById('summaryBox').innerHTML = `
+    <h2>📊 Analyse de séance</h2>
+    <p>
+      Séance d'entraînement par intervalles <strong>${nIntervals}×300m</strong> complétée sur 
+      <strong>${(totalDist/1000).toFixed(2)} km</strong> en <strong>${fmtDuration(totalDuration)}</strong>.
+      L'allure moyenne sur les efforts est de <strong>${avgPaceStr} /km</strong>, ce qui correspond à une vitesse haute intensité.
+    </p>
+    <p>
+      La fréquence cardiaque maximale atteinte est de <strong>${maxHRGlobal} bpm</strong>. 
+      Vous avez passé <strong>${z4pct + z5pct}%</strong> du temps en zones hautes intensité (Z4+Z5), 
+      ce qui confirme le caractère soutenu de la séance.
+    </p>
+    <p>
+      L'effet d'entraînement de pointe (Peak Training Effect) est de <strong>${peakTE}</strong> et le VO₂max estimé 
+      est de <strong>${vo2max} mL/kg/min</strong> — classé <em>Excellent</em> pour votre tranche d'âge.
+      La récupération recommandée est de <strong>${Math.round(header.RecoveryTime/3600)}h</strong>.
+    </p>
+  `;
+
+  document.getElementById('mainContent').style.display = 'block';
+}
+
+// ─── DOWNSAMPLE ───────────────────────────────────────────────────────────────
+function downsample(arr, n) {
+  if (arr.length <= n) return arr;
+  const step = arr.length / n;
+  return Array.from({length: n}, (_, i) => arr[Math.round(i * step)]);
+}
+
+// ─── FILE INPUT ───────────────────────────────────────────────────────────────
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('fileName').textContent = '📄 ' + file.name;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      parseAndRender(data);
+    } catch(err) {
+      alert('Fichier JSON invalide : ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Drag & drop
+const iz = document.getElementById('importZone');
+iz.addEventListener('dragover', e => { e.preventDefault(); iz.classList.add('drag-over'); });
+iz.addEventListener('dragleave', () => iz.classList.remove('drag-over'));
+iz.addEventListener('drop', e => {
+  e.preventDefault();
+  iz.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  document.getElementById('fileName').textContent = '📄 ' + file.name;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try { parseAndRender(JSON.parse(ev.target.result)); }
+    catch(err) { alert('Fichier invalide'); }
+  };
+  reader.readAsText(file);
+});
+
+// ─── AUTO-LOAD EMBEDDED DATA ─────────────────────────────────────────────────
+// Embedded JSON from server
+// if (EMBEDDED_DATA) {
+//   setTimeout(() => parseAndRender(EMBEDDED_DATA), 100);
+// }
+</script>
+</body>
+</html>
